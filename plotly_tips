@@ -1,0 +1,3 @@
+
+fig.write_html('NQ_tick_by_tick.html',
+                   auto_open=True)

@@ -39,8 +39,8 @@ fig.add_vrect(
 sub_data = original_data[sub_start_date:sub_end_date]
 candlestick_count = len(sub_data)
 
-# Calculate the y-position for the counter numbers
-y_position = sub_data['High'] + (sub_data['High'].max() - sub_data['High'].min()) * 0.03
+# Calculate the y-position for the counter numbers with a larger buffer
+y_position = sub_data['High'] + (sub_data['High'].max() - sub_data['High'].min()) * 0.2
 
 # Add counter numbers above the candles for the sub-dates
 candle_counter = go.Scatter(x=sub_data.index, y=y_position, mode='text', text=[f'{c}' for c in range(1, len(sub_data)+1)])
@@ -59,5 +59,5 @@ fig.update_xaxes(range=[original_start_date, original_end_date])
 fig.add_trace(candle_counter)
 
 # Show the plot
-fig.write_html('NQ_counter.html',
+fig.write_html('NQ_tick_by_tick.html',
                    auto_open=True)

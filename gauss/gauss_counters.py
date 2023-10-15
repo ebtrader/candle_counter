@@ -198,7 +198,7 @@ print(df3)
 
 # Define sub-sections with their respective start and end dates
 sub_sections = [
-    {"start_date": "2013-01-08", "end_date": "2013-01-30"}
+    {"start_date": "2013-07-16", "end_date": "2013-09-04"}
 ]
 
 # Iterate through sub-sections and add shapes, counter numbers, and lines

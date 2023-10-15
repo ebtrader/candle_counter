@@ -3,20 +3,27 @@ import numpy as np
 import math
 import pandas as pd
 import plotly.graph_objects as go
+from scipy.signal import argrelextrema
+
+SUB1_START_DATE = "2021-12-01"
+SUB1_END_DATE = "2022-01-06"
+
+SUB2_START_DATE = "2021-12-01"
+SUB2_END_DATE = "2022-01-06"
 
 ticker="NQ=F"
 # df = yf.download(tickers=ticker, period=period, interval=interval)
-df = yf.download(tickers = ticker, start='2021-09-08', end='2023-10-31')
+
+original_start_date = "2021-09-08"
+original_end_date = "2023-10-31"
+
+df = yf.download(tickers=ticker, start=original_start_date, end=original_end_date)
 
 df = df.reset_index()
 
 df7 = df.rename(columns={'Date': 'date', 'Open': 'open', 'High': 'high', 'Low': 'low', 'Close': 'close',
                          'Volume': 'volume'}, inplace=False)
 
-# print(df7)
-# df7.to_csv('daily.csv')
-
-# interval = int(details['interval'])
 n = 5
 
 df3 = df7.groupby(np.arange(len(df7)) // n).max()  # high
@@ -35,9 +42,16 @@ agg_df['high'] = df3['high']
 agg_df['open'] = df5['open']
 agg_df['close'] = df6['close']
 
-df2 = agg_df
+# Calculate pivot points
+Order = 5
 
+max_idx = argrelextrema(agg_df['close'].values, np.greater, order=Order)[0]
+min_idx = argrelextrema(agg_df['close'].values, np.less, order=Order)[0]
+
+df2 = agg_df
 num_periods = 21
+
+# Test Guass
 
 # recursive
 df2['test'] = 5
@@ -187,8 +201,122 @@ fig1.add_trace(
         showlegend=True)
 )
 
-fig1.update_layout(
-    title=ticker, width=1800, height=1200, hovermode='x unified'
+# add pivots to chart
+Size = 15
+Width = 1
+
+fig1.add_trace(
+    go.Scatter(
+        name='Sell Here!',
+        mode='markers',
+        x=agg_df.iloc[max_idx]['date'],
+        y=agg_df.iloc[max_idx]['high'],
+        marker=dict(
+            symbol=46,
+            color='darkred',
+            size=Size,
+            line=dict(
+                color='MediumPurple',
+                width=Width
+            )
+        ),
+        showlegend=True
+    )
 )
+
+fig1.add_trace(
+    go.Scatter(
+        name='Buy Here!',
+        mode='markers',
+        x=agg_df.iloc[min_idx]['date'],
+        y=agg_df.iloc[min_idx]['low'],
+        marker=dict(
+            symbol=45,
+            color='forestgreen',
+            size=Size,
+            line=dict(
+                color='MediumPurple',
+                width=Width
+            )
+        ),
+        showlegend=True
+    )
+)
+
+
+# get index to be date
+df3 = df2.set_index('date')
+
+# Define sub-sections with their respective start and end dates
+sub_sections = [
+    {"start_date": SUB1_START_DATE, "end_date": SUB1_END_DATE},
+    {"start_date": SUB2_START_DATE, "end_date": SUB2_END_DATE}
+]
+
+# Iterate through sub-sections and add shapes, counter numbers, and lines
+for sub_section in sub_sections:
+    sub_start_date = sub_section["start_date"]
+    sub_end_date = sub_section["end_date"]
+
+    sub_start_idx = df3.index.get_loc(sub_start_date)
+    sub_end_idx = df3.index.get_loc(sub_end_date)
+
+    # Add a rectangle shape to indicate the sub-dates
+    fig1.add_vrect(
+        x0=sub_start_date,
+        x1=sub_end_date,
+        fillcolor="rgba(0, 255, 0, 0.2)",
+        layer="below",
+        line_width=0,
+    )
+
+    # Count the number of candlesticks in the sub-section
+    sub_data = df3[sub_start_date:sub_end_date]
+    candlestick_count = len(sub_data)
+
+    # Calculate the y-position for the counter numbers with a larger buffer
+    y_position = sub_data['high'] + (sub_data['high'].max() - sub_data['high'].min()) * 0.5
+
+    # Calculate the corresponding x-values for the counter numbers based on the aggregation interval
+    x_values = df3.index[sub_start_idx:sub_end_idx + 1]
+
+    # Add counter numbers above the candles for the sub-dates
+    candle_counter = go.Scatter(x=x_values, y=y_position, mode='text',
+                                text=[f'{c}' for c in range(1, len(x_values) + 1)])
+
+    # Add the counter numbers to the figure
+    fig1.add_trace(candle_counter)
+
+    # Draw a horizontal line at the highest and lowest levels for the sub-section
+    highest_level = sub_data['high'].max()
+    lowest_level = sub_data['low'].min()
+    highest_line = go.Scatter(x=[sub_start_date, sub_end_date], y=[highest_level, highest_level],
+                              mode='lines', name=f'Highest Level', line=dict(color='red', width=1))
+    lowest_line = go.Scatter(x=[sub_start_date, sub_end_date], y=[lowest_level, lowest_level],
+                             mode='lines', name=f'Lowest Level', line=dict(color='blue', width=1))
+
+    # Calculate the midpoint between the high and low
+    middle_level = (highest_level + lowest_level) / 2
+    middle_line = go.Scatter(x=[sub_start_date, sub_end_date], y=[middle_level, middle_level],
+                             mode='lines', name=f'Middle Level', line=dict(color='purple', width=1, dash='dash'))
+
+    fig1.add_trace(highest_line)
+    fig1.add_trace(lowest_line)
+    fig1.add_trace(middle_line)
+
+# Set the chart title and labels
+
+fig1.update_xaxes(rangeslider_visible=False)
+
+fig1.update_layout(
+    title=f"{ticker} Candlestick Chart ({original_start_date} to {original_end_date})",
+    xaxis_title="Date",
+    yaxis_title="Price",
+    width=1800, height=1000, hovermode='x unified'
+)
+
+# Set the x-axis range to display only the desired date range
+fig1.update_xaxes(range=[original_start_date, original_end_date])
+
 # Show the plot
 fig1.write_html('NQ_tick_by_tick.html', auto_open=True)

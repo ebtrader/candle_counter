@@ -1,6 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+import numpy as np
 
 # Set the symbol and the original date range
 symbol = "NQ=F"
@@ -15,7 +16,7 @@ sub_sections = [
     {"start_date": "2022-01-21", "end_date": "2022-04-01"},
     {"start_date": "2023-08-04", "end_date": "2023-10-13"},
     {"start_date": "2022-09-18", "end_date": "2023-01-21"},
-    {"start_date": "2022-09-18", "end_date": "2023-01-21"}
+    {"start_date": "2023-04-26", "end_date": "2023-07-05"}
 ]
 
 # Define the aggregation interval (e.g., n=5)
@@ -29,6 +30,7 @@ aggregated_data = original_data.resample(f'{aggregation_interval}D').agg({
     'Close': 'last',
     'Volume': 'sum',
 })
+print(aggregated_data)
 
 # Create a candlestick chart using Plotly with aggregated data
 fig = go.Figure(data=[go.Candlestick(x=aggregated_data.index,

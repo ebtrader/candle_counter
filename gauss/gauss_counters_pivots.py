@@ -8,8 +8,8 @@ from scipy.signal import argrelextrema
 SUB1_START_DATE = "2021-12-01"
 SUB1_END_DATE = "2022-01-06"
 
-SUB2_START_DATE = "2021-12-01"
-SUB2_END_DATE = "2022-01-06"
+SUB2_START_DATE = "2023-08-18"
+SUB2_END_DATE = "2023-10-13"
 
 ticker="NQ=F"
 # df = yf.download(tickers=ticker, period=period, interval=interval)
